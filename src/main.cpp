@@ -2,51 +2,55 @@
 #include <opencv2/opencv.hpp>
 #include <SDL2/SDL.h>
 
+#include "cvprocessor.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
 int main() {
+    std::string home_dir = getenv("HOME");
+    cv::VideoCapture video(std::string(home_dir) + "/Videos/indoordrone.mp4");
     // Initialize SDL
+    if (!video.isOpened()) {
+        std::cerr << "Error opening video file" << std::endl;
+        return {};
+    }
+
+    int width = video.get(cv::CAP_PROP_FRAME_WIDTH);
+    int height = video.get(cv::CAP_PROP_FRAME_HEIGHT);
+    int frame_count = video.get(cv::CAP_PROP_FRAME_COUNT);
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "SDL initialization failed: " << SDL_GetError() << std::endl;
         return 1;
     }
 
-     const char *homeDir = getenv("HOME");
-    // Open the video file
-    cv::VideoCapture video(std::string(homeDir) + "/indoordrone.mp4");
-    if (!video.isOpened()) {
-        std::cerr << "Error opening video file" << std::endl;
-        SDL_Quit();
-        return 1;
+    SDL_Window *window = SDL_CreateWindow("SDL Square", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (renderer == nullptr) {
+        std::cerr << "Renderer could not be created! SDL Error: " << SDL_GetError() << std::endl;
+        return false;
     }
 
-    // Get video properties
-    int width = video.get(cv::CAP_PROP_FRAME_WIDTH);
-    int height = video.get(cv::CAP_PROP_FRAME_HEIGHT);
+    std::cout << "begin process" << std::endl;
+    std::vector<MapFrame> frames = process(video);
+    std::cout << "end process" << std::endl;
 
-    // Create SDL window
-    SDL_Window *window = SDL_CreateWindow("Video Player", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
-    if (!window) {
-        std::cerr << "Error creating SDL window: " << SDL_GetError() << std::endl;
-        SDL_Quit();
-        return 1;
-    }
-
-    // Create SDL renderer
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (!renderer) {
-        std::cerr << "Error creating SDL renderer: " << SDL_GetError() << std::endl;
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
-
+    //auto frame_iter = frames.begin();
     // Main loop
     bool quit = false;
     SDL_Event event;
-    while (!quit) {
+    for (auto frame_iter = frames.begin(); frame_iter != frames.end(); frame_iter++) {
+        std::cout << "LOOP" << std::endl;
         // Read frame from video
-        cv::Mat frame;
-        video >> frame;
-
+        for (int i = 0; i < 100; i++) {
+            int randx = rand() % width;
+            int randy = rand() % height;
+            frame_iter->add_point(randx, randy);
+        }
+        cv::Mat frame = frame_iter->draw_mat();
+        int width = frame_iter->width;
+        int height = frame_iter->height;
         // Check if frame is empty (end of video)
         if (frame.empty()) {
             break;
@@ -66,6 +70,7 @@ int main() {
         // Copy texture to renderer
         SDL_RenderCopy(renderer, texture, NULL, NULL);
 
+        SDL_RenderDrawPoint(renderer, 30, 30);
         // Update screen
         SDL_RenderPresent(renderer);
 
@@ -74,6 +79,9 @@ int main() {
             if (event.type == SDL_QUIT) {
                 quit = true;
             }
+        }
+        if (quit) {
+            break;
         }
 
         // Delay for 1 second
