@@ -33,7 +33,7 @@ int main() {
         std::cerr << "window could not be created! SDL Error: " << SDL_GetError() << std::endl;
         return false;
     }
-    
+
     SDL_Renderer *map_renderer = 
     SDL_CreateRenderer(map_window, -1, SDL_RENDERER_ACCELERATED);
     if (map_renderer == nullptr) {
