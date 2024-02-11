@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 int main() {
     std::string home_dir = getenv("HOME");
@@ -25,16 +26,36 @@ int main() {
         return 1;
     }
 
-    SDL_Window *window = SDL_CreateWindow("SDL Square", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (renderer == nullptr) {
+
+    SDL_Window *map_window = 
+    SDL_CreateWindow("SDL Square", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
+    if (map_window == nullptr) {
+        std::cerr << "window could not be created! SDL Error: " << SDL_GetError() << std::endl;
+        return false;
+    }
+    
+    SDL_Renderer *map_renderer = 
+    SDL_CreateRenderer(map_window, -1, SDL_RENDERER_ACCELERATED);
+    if (map_renderer == nullptr) {
         std::cerr << "Renderer could not be created! SDL Error: " << SDL_GetError() << std::endl;
         return false;
     }
 
-    std::cout << "begin process" << std::endl;
+    SDL_Window *video_window = 
+    SDL_CreateWindow("SDL Square", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
+    if (video_window == nullptr) {
+        std::cerr << "window could not be created! SDL Error: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    SDL_Renderer *video_renderer = 
+    SDL_CreateRenderer(video_window, -1, SDL_RENDERER_ACCELERATED);
+    if (video_renderer == nullptr) {
+        std::cerr << "Renderer could not be created! SDL Error: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
     std::vector<MapFrame> frames = process(video);
-    std::cout << "end process" << std::endl;
 
     //auto frame_iter = frames.begin();
     // Main loop
@@ -61,18 +82,18 @@ int main() {
         SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(frame.data, width, height, 24, 3 * width, 0x0000FF, 0x00FF00, 0xFF0000, 0);
 
         // Convert SDL_Surface to SDL_Texture
-        SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_Texture *texture = SDL_CreateTextureFromSurface(video_renderer, surface);
         SDL_FreeSurface(surface);
 
         // Clear screen
-        SDL_RenderClear(renderer);
+        SDL_RenderClear(video_renderer);
 
         // Copy texture to renderer
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
+        SDL_RenderCopy(video_renderer, texture, NULL, NULL);
 
-        SDL_RenderDrawPoint(renderer, 30, 30);
+        SDL_RenderDrawPoint(video_renderer, 30, 30);
         // Update screen
-        SDL_RenderPresent(renderer);
+        SDL_RenderPresent(video_renderer);
 
         // Handle events
         while (SDL_PollEvent(&event)) {
@@ -85,15 +106,15 @@ int main() {
         }
 
         // Delay for 1 second
-        SDL_Delay(1000);
+        usleep(500000);
 
         // Free texture
         SDL_DestroyTexture(texture);
     }
 
     // Cleanup
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(video_renderer);
+    SDL_DestroyWindow(video_window);
     SDL_Quit();
 
     return 0;
