@@ -15,14 +15,11 @@ MapFrame::MapFrame(cv::Mat &mat) {
     }
 };
 
-void MapFrame::add_point(int width, int height) {
-    if (height < 0 || height > this->height || width < 0 || width > this->width) {
-        std::cerr << "incorrect coordinates: " << height << ", " << width << std::endl;
-        return;
-    }
-    this->points.push_back({width, height});
-};
-
+void MapFrame::detect_features() {
+    int x = 0;
+    int y = 0;
+    this->features.push_back( Feature(x, y) );
+}
 
 cv::Mat MapFrame::draw_mat() {
     cv::Mat mat(this->height, this->width, CV_8UC3);
@@ -39,9 +36,9 @@ cv::Mat MapFrame::draw_mat() {
         }
     }
 
-    for (auto point = this->points.begin(); point != this->points.end(); point++) {
-        int x = (*point)[0];
-        int y = (*point)[1];
+    for (auto point = this->features.begin(); point != this->features.end(); point++) {
+        int x = (*point).get_x();
+        int y = (*point).get_y();
 
         for (int ypt = y - 1; ypt < y + 2; ypt++) {
             if (ypt < 0 || ypt > this->height) {
