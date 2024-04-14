@@ -4,7 +4,6 @@
 #include <memory>
 #include <vector>
 #include <opencv2/opencv.hpp>
-#include "feature.h"
 
 class MapFrame {
 public:

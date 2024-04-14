@@ -1,38 +1,27 @@
-#include <iostream>
-#include <opencv2/opencv.hpp>
-#include <SDL2/SDL.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include "mapframe.h"
-#include "cvprocessor.h"
+#include <iostream>
+
+#include <opencv2/opencv.hpp>
+#include <SDL2/SDL.h>
+
 #include <opencv2/features2d.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgcodecs/legacy/constants_c.h>
 
+#include "mapframe.h"
+#include "cvprocessor.h"
+#include "mapview.h"
+#include "lensview.h"
+
+cv::VideoCapture get_video(int argc, char **argv);
+
 int main(int argc, char **argv) {
-    if (argc != 2) {
-        std::cout << "Supply an absolute or relative path to an mp4 file" << std::endl;
-        return 1;
-    }
-    
-    std::string video_path = std::string(argv[1]);
-    
-    if (video_path.size() < 4 || video_path.compare(video_path.size() - 4, 4, ".mp4")) {
-        std::cout << "invalid mp4 path" << std::endl;
-        return 1;
-    }
-
-    cv::VideoCapture video(video_path);
-    if (!video.isOpened()) {
-        std::cerr << "Error opening video file" << std::endl;
-        return 1;
-    }
-
+    cv::VideoCapture video = get_video(argc, argv);
     int width = video.get(cv::CAP_PROP_FRAME_WIDTH);
     int height = video.get(cv::CAP_PROP_FRAME_HEIGHT);
     int frame_count = video.get(cv::CAP_PROP_FRAME_COUNT);
@@ -41,17 +30,19 @@ int main(int argc, char **argv) {
     std::vector<MapFrame> frames = process(video);
     std::cout << "Finished processing " << frame_count << " frames" << std::endl;
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cerr << "SDL initialization failed: " << SDL_GetError() << std::endl;
-        return 1;
-    }
-
+    MapView map(1200, 800);
     SDL_Window *map_window = nullptr; 
     SDL_Renderer *map_renderer = nullptr;
+
+    LensView lens(width, height);
     SDL_Window *video_window = nullptr;
     SDL_Renderer *video_renderer = nullptr;
 
-    map_window = SDL_CreateWindow("SDL Square", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        std::cerr << "SDL initialization failed: " << SDL_GetError() << std::endl;
+        exit(1);
+    }
+    map_window = SDL_CreateWindow("Map", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1200, 800, SDL_WINDOW_SHOWN);
     if (map_window == nullptr) {
         std::cerr << "window could not be created! SDL Error: " << SDL_GetError() << std::endl;
         return false;
@@ -61,7 +52,7 @@ int main(int argc, char **argv) {
         std::cerr << "Renderer could not be created! SDL Error: " << SDL_GetError() << std::endl;
         return false;
     }
-    video_window = SDL_CreateWindow("SDL Square", 100, 100, width, height, SDL_WINDOW_SHOWN);
+    video_window = SDL_CreateWindow("Lens", 100, 100, width, height, SDL_WINDOW_SHOWN);
     if (video_window == nullptr) {
         std::cerr << "window could not be created! SDL Error: " << SDL_GetError() << std::endl;
         return false;
@@ -78,9 +69,13 @@ int main(int argc, char **argv) {
     bool quit = false;
     SDL_Event event;
 
+    bool init = true;
     for (auto frame_iter = frames.begin(); frame_iter != frames.end(); frame_iter++) {
         frame_iter->detect_features();
         cv::Mat frame = frame_iter->draw_mat();
+        if (!init) {
+
+        }
 
         int width = frame_iter->width;
         int height = frame_iter->height;
@@ -115,11 +110,34 @@ int main(int argc, char **argv) {
         usleep(500000);
 
         SDL_DestroyTexture(texture);
+        init = false;
     }
 
-    SDL_DestroyRenderer(video_renderer);
-    SDL_DestroyWindow(video_window);
+    delete &map;
+    delete &lens;
     SDL_Quit();
 
     return 0;
+}
+
+cv::VideoCapture get_video(int argc, char **argv) {
+    if (argc != 2) {
+        std::cout << "Supply an absolute or relative path to an mp4 file" << std::endl;
+        exit(1);
+    }
+    
+    std::string video_path = std::string(argv[1]);
+    
+    if (video_path.size() < 4 || video_path.compare(video_path.size() - 4, 4, ".mp4")) {
+        std::cout << "invalid mp4 path" << std::endl;
+        exit(1);
+    }
+
+    cv::VideoCapture video(video_path);
+    if (!video.isOpened()) {
+        std::cerr << "Error opening video file" << std::endl;
+        exit(1);
+    }
+
+    return std::move(video);
 }

@@ -11,12 +11,17 @@ find_package(OpenCV REQUIRED)
 
 target_include_directories(mslam PRIVATE 
     ${SDL2_INCLUDE_DIRS}
-    ${OpenCV_INCLUDE_DIRS})
+    ${OpenCV_INCLUDE_DIRS}
+    ${OPENGL_INCLUDE_DIRS}    
+    ${GLM_INCLUDE_DIRS}
+    ${GLEW_INCLUDE_DIRS})
 
 target_link_libraries(mslam PRIVATE 
     ${SDL2_LIBRARIES}
-    ${OpenCV_LIBS})
-
+    ${OpenCV_LIBS}
+    ${OPENGL_LIBRARIES}
+    ${GLM_LIBRARIES}
+    ${GLEW_LIBRARIES})
 #target_compile_options(mslam PRIVATE
 #    -Isrc/
 #    -lSDL2main 
