@@ -6,7 +6,7 @@
 class MapView {
 public:
     MapView(int width, int height);
-    ~MapView();
+    void clean();
 private:
     int width, height;
     SDL_Window *window = nullptr;

@@ -31,37 +31,7 @@ int main(int argc, char **argv) {
     std::cout << "Finished processing " << frame_count << " frames" << std::endl;
 
     MapView map(1200, 800);
-    SDL_Window *map_window = nullptr; 
-    SDL_Renderer *map_renderer = nullptr;
-
     LensView lens(width, height);
-    SDL_Window *video_window = nullptr;
-    SDL_Renderer *video_renderer = nullptr;
-
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cerr << "SDL initialization failed: " << SDL_GetError() << std::endl;
-        exit(1);
-    }
-    map_window = SDL_CreateWindow("Map", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1200, 800, SDL_WINDOW_SHOWN);
-    if (map_window == nullptr) {
-        std::cerr << "window could not be created! SDL Error: " << SDL_GetError() << std::endl;
-        return false;
-    }
-    map_renderer = SDL_CreateRenderer(map_window, -1, SDL_RENDERER_ACCELERATED);
-    if (map_renderer == nullptr) {
-        std::cerr << "Renderer could not be created! SDL Error: " << SDL_GetError() << std::endl;
-        return false;
-    }
-    video_window = SDL_CreateWindow("Lens", 100, 100, width, height, SDL_WINDOW_SHOWN);
-    if (video_window == nullptr) {
-        std::cerr << "window could not be created! SDL Error: " << SDL_GetError() << std::endl;
-        return false;
-    }
-    video_renderer = SDL_CreateRenderer(video_window, -1, SDL_RENDERER_ACCELERATED);
-    if (video_renderer == nullptr) {
-        std::cerr << "Renderer could not be created! SDL Error: " << SDL_GetError() << std::endl;
-        return false;
-    }
 
     cv::Ptr<cv::FeatureDetector> detector = cv::ORB::create();
     cv::Ptr<cv::DescriptorExtractor> descriptor = cv::ORB::create();
@@ -72,28 +42,16 @@ int main(int argc, char **argv) {
     bool init = true;
     for (auto frame_iter = frames.begin(); frame_iter != frames.end(); frame_iter++) {
         frame_iter->detect_features();
-        cv::Mat frame = frame_iter->draw_mat();
         if (!init) {
-
+            // Match features, estimate motion, draw to map
         }
 
-        int width = frame_iter->width;
-        int height = frame_iter->height;
+        cv::Mat frame = frame_iter->draw_mat();
         if (frame.empty()) {
             std::cerr << "empty frame detected" << std::endl;
-            return 1;
+            exit(1);
         }
-
-        cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
-        SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(frame.data, width, height, 24, 3 * width, 0x0000FF, 0x00FF00, 0xFF0000, 0);
-
-        SDL_Texture *texture = SDL_CreateTextureFromSurface(video_renderer, surface);
-        SDL_FreeSurface(surface);
-
-        SDL_RenderClear(video_renderer);
-        SDL_RenderCopy(video_renderer, texture, NULL, NULL);
-        SDL_RenderPresent(video_renderer);
-
+        lens.render(frame);
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 quit = true;
@@ -108,13 +66,11 @@ int main(int argc, char **argv) {
         }
 
         usleep(500000);
-
-        SDL_DestroyTexture(texture);
         init = false;
     }
 
-    delete &map;
-    delete &lens;
+    map.clean();
+    lens.clean();
     SDL_Quit();
 
     return 0;

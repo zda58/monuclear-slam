@@ -4,7 +4,7 @@
 MapView::MapView(int width, int height) {
     this->width = width;
     this->height = height;
-    this->window = SDL_CreateWindow("Map", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1200, 800, SDL_WINDOW_SHOWN);
+    this->window = SDL_CreateWindow("Map", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, this->width, this->height, SDL_WINDOW_OPENGL);
     if (this->window == nullptr) {
         std::cerr << "Failed to create map window: " << SDL_GetError() << std::endl;
         exit(1);
@@ -16,7 +16,7 @@ MapView::MapView(int width, int height) {
     }
 }
 
-MapView::~MapView() {
+void MapView::clean() {
     SDL_DestroyWindow(this->window);
     SDL_GL_DeleteContext(this->context);
 }
