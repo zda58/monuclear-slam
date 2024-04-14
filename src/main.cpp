@@ -33,9 +33,6 @@ int main(int argc, char **argv) {
     MapView map(1200, 800);
     LensView lens(width, height);
 
-    cv::Ptr<cv::FeatureDetector> detector = cv::ORB::create();
-    cv::Ptr<cv::DescriptorExtractor> descriptor = cv::ORB::create();
-    cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
     bool quit = false;
     SDL_Event event;
 
@@ -43,7 +40,6 @@ int main(int argc, char **argv) {
     for (auto frame_iter = frames.begin(); frame_iter != frames.end(); frame_iter++) {
         frame_iter->detect_features();
         if (!init) {
-            // Match features, estimate motion, draw to map
         }
 
         cv::Mat frame = frame_iter->draw_mat();
@@ -52,6 +48,7 @@ int main(int argc, char **argv) {
             exit(1);
         }
         lens.render(frame);
+        map.render();
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 quit = true;

@@ -22,7 +22,7 @@ void LensView::render(cv::Mat &mat) {
 
     SDL_Texture *texture = SDL_CreateTextureFromSurface(this->renderer, surface);
     SDL_FreeSurface(surface);
-
+    SDL_SetRenderTarget(this->renderer, nullptr);
     SDL_RenderClear(this->renderer);
     SDL_RenderCopy(this->renderer, texture, NULL, NULL);
     SDL_RenderPresent(this->renderer);
