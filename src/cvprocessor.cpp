@@ -1,4 +1,5 @@
 #include "cvprocessor.h"
+#include <opencv2/imgcodecs/legacy/constants_c.h>
 
 std::vector<MapFrame> process(cv::VideoCapture &video) {
     int frame_count = video.get(cv::CAP_PROP_FRAME_COUNT);

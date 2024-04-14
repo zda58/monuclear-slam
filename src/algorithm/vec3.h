@@ -18,7 +18,7 @@ public:
     float length();
     float length_squared();
 private:
-    float e[3];
+    float values[3];
 };
 
 

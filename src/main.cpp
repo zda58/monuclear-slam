@@ -2,12 +2,17 @@
 #include <opencv2/opencv.hpp>
 #include <SDL2/SDL.h>
 
-#include "cvprocessor.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include "mapframe.h"
+#include "cvprocessor.h"
+#include <opencv2/features2d.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgcodecs/legacy/constants_c.h>
 
 int main(int argc, char **argv) {
     if (argc != 2) {
@@ -67,12 +72,16 @@ int main(int argc, char **argv) {
         return false;
     }
 
+    cv::Ptr<cv::FeatureDetector> detector = cv::ORB::create();
+    cv::Ptr<cv::DescriptorExtractor> descriptor = cv::ORB::create();
+    cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
     bool quit = false;
     SDL_Event event;
-    for (auto frame_iter = frames.begin(); frame_iter != frames.end(); frame_iter++) {
-        
 
+    for (auto frame_iter = frames.begin(); frame_iter != frames.end(); frame_iter++) {
+        frame_iter->detect_features();
         cv::Mat frame = frame_iter->draw_mat();
+
         int width = frame_iter->width;
         int height = frame_iter->height;
         if (frame.empty()) {

@@ -9,14 +9,13 @@
 class MapFrame {
 public:
     MapFrame(cv::Mat &mat);
-    std::vector<std::array<uint8_t, 3>> &get_frame_buffer() { return frame_buffer; };
     cv::Mat draw_mat();
     void detect_features();
     int height;
     int width;
 private:
-    std::vector<std::array<uint8_t, 3>> frame_buffer;
-    std::vector<Feature> features;
+    cv::Mat frame;
+    std::vector<cv::KeyPoint> keypoints;
 };
 
 #endif
