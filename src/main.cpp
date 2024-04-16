@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
     int frame_count = video.get(cv::CAP_PROP_FRAME_COUNT);
     
     std::cout << "Video resolution: " << width << " by " << height << std::endl;
-    std::vector<MapFrame> frames = process(video);
+    std::vector<MapFrame> frames = process_video_frames(video);
     std::cout << "Finished processing " << frame_count << " frames" << std::endl;
 
     MapView map(1200, 800);
@@ -38,8 +38,30 @@ int main(int argc, char **argv) {
 
     bool init = true;
     for (auto frame_iter = frames.begin(); frame_iter != frames.end(); frame_iter++) {
-        frame_iter->detect_features();
+        MapFrame &current_frame = *frame_iter;
+        current_frame.detect_features();
         if (!init) {
+            MapFrame &previous_frame = *(frame_iter - 1);
+            cv::Ptr<cv::DescriptorMatcher> descriptor_matcher = 
+                cv::DescriptorMatcher::create("BruteForce-Hamming");
+            std::vector<cv::DMatch> matches;
+            descriptor_matcher->match(previous_frame.get_descriptors(), current_frame.get_descriptors(), matches);
+
+            auto min_max = 
+                std::minmax_element(matches.begin(), matches.end(), 
+                [](const cv::DMatch &m1, const cv::DMatch &m2) 
+                { return m1.distance < m2.distance; });
+            double min_dist = min_max.first->distance;
+            double max_dist = min_max.second->distance;
+
+            std::vector<cv::DMatch> good_matches;
+            for (int i = 0; i < previous_frame.get_descriptors().rows; i++) {
+                if (matches[i].distance <= std::max(2 * min_dist, 30.0)) {
+                    good_matches.push_back(matches[i]);
+                }
+            }
+
+            process_pose_matrices(previous_frame.get_keypoints(), current_frame.get_keypoints(), good_matches);
         }
 
         cv::Mat frame = frame_iter->draw_mat();

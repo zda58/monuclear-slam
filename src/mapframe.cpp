@@ -8,8 +8,10 @@ MapFrame::MapFrame(cv::Mat &mat) {
 };
 
 void MapFrame::detect_features() {
-    cv::Ptr<cv::FeatureDetector> detector = cv::ORB::create();
-    detector->detect(this->frame, keypoints);
+    cv::Ptr<cv::FeatureDetector> feature_detector = cv::ORB::create();
+    feature_detector->detect(this->frame, this->keypoints);
+    cv::Ptr<cv::DescriptorExtractor> descriptor_detector = cv::ORB::create();
+    descriptor_detector->compute(this->frame, this->keypoints, this->descriptors);
 }
 
 cv::Mat MapFrame::draw_mat() {
